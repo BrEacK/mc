@@ -111,6 +111,8 @@ const char VERTICAL_MAGIC[] = { '\1', '\1', '\1', '\1', '\n' };
 
 #define space_width 1
 
+#define DETECT_LB_TYPE_BUFLEN BUF_MEDIUM
+
 /*** file scope type declarations ****************************************************************/
 
 /*** file scope variables ************************************************************************/
@@ -423,6 +425,65 @@ check_file_access (WEdit * edit, const char *filename, struct stat *st)
 
 /* --------------------------------------------------------------------------------------------- */
 /**
+ * detect type of line breaks
+ *
+ */
+static LineBreaks
+detect_lb_type (char *filename)
+{
+    char buf[DETECT_LB_TYPE_BUFLEN];
+    ssize_t file, sz;
+    LineBreaks ret_value = LB_ASIS;
+    gboolean found = FALSE;
+    char prev_symbol = '\0';
+
+    file = mc_open (filename, O_RDONLY | O_BINARY);
+    if (file == -1)
+        return ret_value;
+
+    while (((sz = mc_read (file, buf, sizeof (buf) - 1)) >= 0) && (!found))
+    {
+        size_t i;
+        for (i = 0; i < sizeof (buf) && !found; i++)
+        {
+            switch (buf[i])
+            {
+            case '\n':
+                /* ret_value = LB_UNIX; */
+                if (prev_symbol == '\r')
+                    ret_value = LB_WIN;
+                found = TRUE;
+                break;
+            case '\r':
+                if (i == sizeof (buf) - 1)
+                {
+                    prev_symbol = '\r';
+                    ret_value = LB_MAC;
+                }
+                else if (buf[i + 1] == '\n')
+                {
+                    ret_value = LB_WIN;
+                    found = TRUE;
+                }
+                else
+                {
+                    ret_value = LB_MAC;
+                    found = TRUE;
+                }
+                break;
+            default:
+                if (prev_symbol != '\0')
+                    found = TRUE;
+            }
+        }
+    }
+    mc_close (file);
+
+    return ret_value;
+}
+
+/* --------------------------------------------------------------------------------------------- */
+/**
  * Open the file and load it into the buffers, either directly or using
  * a filter.  Return 0 on success, 1 on error.
  *
@@ -436,6 +497,7 @@ static int
 edit_load_file (WEdit * edit)
 {
     int fast_load = 1;
+    LineBreaks lb_type = LB_ASIS;
     vfs_path_t *vpath = vfs_path_from_str (edit->filename);
 
     /* Cannot do fast load if a filter is used */
@@ -460,6 +522,10 @@ edit_load_file (WEdit * edit)
         /* If we are dealing with a real file, check that it exists */
         if (check_file_access (edit, edit->filename, &edit->stat1))
             return 1;
+        lb_type = detect_lb_type (edit->filename);
+
+        if (lb_type != LB_ASIS && lb_type != LB_UNIX)
+            fast_load = 0;
     }
     else
     {
@@ -482,15 +548,16 @@ edit_load_file (WEdit * edit)
         if (*edit->filename)
         {
             edit->undo_stack_disable = 1;
-            if (edit_insert_file (edit, edit->filename) < 0)
+            if (edit_insert_file (edit, edit->filename, lb_type) < 0)
             {
                 edit_clean (edit);
                 return 1;
             }
+            edit_set_markers (edit, 0, 0, 0, 0);
             edit->undo_stack_disable = 0;
         }
     }
-    edit->lb = LB_ASIS;
+    edit->lb = lb_type;
     return 0;
 }
 
@@ -1855,7 +1922,7 @@ user_menu (WEdit * edit, const char *menu_file, int selected_entry)
         {
             long ins_len;
 
-            ins_len = edit_insert_file (edit, block_file);
+            ins_len = edit_insert_file (edit, block_file, LB_ASIS);
             if (nomark == 0 && ins_len > 0)
                 edit_set_markers (edit, start_mark, start_mark + ins_len, 0, 0);
         }
@@ -2071,7 +2138,7 @@ edit_write_stream (WEdit * edit, FILE * f)
 /* --------------------------------------------------------------------------------------------- */
 /** inserts a file at the cursor, returns count of inserted bytes on success */
 long
-edit_insert_file (WEdit * edit, const char *filename)
+edit_insert_file (WEdit * edit, const char *filename, LineBreaks lb_type)
 {
     char *p;
     long ins_len = 0;
@@ -2146,7 +2213,19 @@ edit_insert_file (WEdit * edit, const char *filename)
             while ((blocklen = mc_read (file, (char *) buf, TEMP_BUF_LEN)) > 0)
             {
                 for (i = 0; i < blocklen; i++)
-                    edit_insert (edit, buf[i]);
+                {
+                    if (buf[i] == '\r')
+                    {
+                        if (lb_type == LB_MAC)
+                            edit_insert (edit, '\n');
+                        else if (lb_type == LB_WIN)
+                            /* just skip */ ;
+                        else
+                            edit_insert (edit, '\r');
+                    }
+                    else
+                        edit_insert (edit, buf[i]);
+                }
             }
             /* highlight inserted text then not persistent blocks */
             if (!option_persistent_selections && edit->modified)
@@ -2246,6 +2325,7 @@ edit_init (WEdit * edit, int y, int x, int lines, int cols, const char *filename
     edit->redo_stack_size_mask = START_STACK_SIZE - 1;
     edit->redo_stack = g_malloc0 ((edit->redo_stack_size + 10) * sizeof (long));
 
+    edit->highlight = 0;
     edit->utf8 = 0;
     edit->converter = str_cnv_from_term;
     edit_set_codeset (edit);

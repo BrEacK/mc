@@ -108,6 +108,13 @@ status_string (WEdit * edit, char *s, int w)
     unsigned int cur_utf = 0;
     int cw = 1;
 
+    static const char *lb_names[LB_NAMES] = {
+        "",
+        "LF",
+        "CRLF",
+        "CR"
+    };
+
     /*
      * If we are at the end of file, print <EOF>,
      * otherwise print the current character as is (if printable),
@@ -147,7 +154,7 @@ status_string (WEdit * edit, char *s, int w)
     /* The field lengths just prevent the status line from shortening too much */
     if (simple_statusbar)
         g_snprintf (s, w,
-                    "%c%c%c%c %3ld %5ld/%ld %6ld/%ld %s %s",
+                    "%c%c%c%c %3ld %5ld/%ld %6ld/%ld %s %s %s",
                     edit->mark1 != edit->mark2 ? (edit->column_highlight ? 'C' : 'B') : '-',
                     edit->modified ? 'M' : '-',
                     macro_index < 0 ? '-' : 'R',
@@ -157,14 +164,14 @@ status_string (WEdit * edit, char *s, int w)
                     edit->total_lines + 1, edit->curs1, edit->last_byte, byte_str,
 #ifdef HAVE_CHARSET
                     mc_global.source_codepage >=
-                    0 ? get_codepage_id (mc_global.source_codepage) : ""
+                    0 ? get_codepage_id (mc_global.source_codepage) : "",
 #else
-                    ""
+                    "",
 #endif
-            );
+                    lb_names[edit->lb]);
     else
         g_snprintf (s, w,
-                    "[%c%c%c%c] %2ld L:[%3ld+%2ld %3ld/%3ld] *(%-4ld/%4ldb) %s  %s",
+                    "[%c%c%c%c] %2ld L:[%3ld+%2ld %3ld/%3ld] *(%-4ld/%4ldb) %s %s %s",
                     edit->mark1 != edit->mark2 ? (edit->column_highlight ? 'C' : 'B') : '-',
                     edit->modified ? 'M' : '-',
                     macro_index < 0 ? '-' : 'R',
@@ -176,11 +183,11 @@ status_string (WEdit * edit, char *s, int w)
                     edit->total_lines + 1, edit->curs1, edit->last_byte, byte_str,
 #ifdef HAVE_CHARSET
                     mc_global.source_codepage >=
-                    0 ? get_codepage_id (mc_global.source_codepage) : ""
+                    0 ? get_codepage_id (mc_global.source_codepage) : "",
 #else
-                    ""
+                    "",
 #endif
-            );
+                    lb_names[edit->lb]);
 }
 
 /* --------------------------------------------------------------------------------------------- */
