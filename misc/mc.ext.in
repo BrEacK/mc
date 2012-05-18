@@ -526,6 +526,10 @@ regex/\.([hH][tT][mM][lL]?)$
 shell/.sdw
 	Open=@EXTHELPERSDIR@/doc.sh open oofice
 
++regex/\.(sxw|SXW)$
+	Open=@EXTHELPERSDIR@/doc.sh open starofice
+	View=%view{ascii} @EXTHELPERSDIR@/doc.sh view starofice
+
 # StarOffice 6 and OpenOffice.org formats
 regex/\.(odt|ott|sxw|stw|ods|ots|sxc|stc|odp|otp|sxi|sti|odg|otg|sxd|std|odb|odf|sxm|odm|sxg)$
 	Open=@EXTHELPERSDIR@/doc.sh open oofice
@@ -554,6 +558,10 @@ regex/\.([xX][lL][sSwW])$
 type/^Microsoft\ Excel
 	Open=@EXTHELPERSDIR@/doc.sh open msxls
 	View=%view{ascii} @EXTHELPERSDIR@/doc.sh view msxls
+
+regex/\.([Pp][Pp][Tt]|[Pp][Pp][Ss])$
+	Open=@EXTHELPERSDIR@/doc.sh open msppt
+	View=%view{ascii} @EXTHELPERSDIR@/doc.sh view msppt
 
 # Use OpenOffice.org to open any MS Office documents
 type/^Microsoft\ Office\ Document
