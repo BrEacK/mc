@@ -29,6 +29,9 @@ do_view_action() {
     dbf)
         dbview -b "${MC_EXT_FILENAME}"
         ;;
+    sqlite)
+        sqlite3 "${MC_EXT_FILENAME}" .dump
+        ;;
     mo)
         msgunfmt "${MC_EXT_FILENAME}" || \
             cat "${MC_EXT_FILENAME}"
@@ -53,6 +56,9 @@ do_open_action() {
         ;;
     dbf)
         dbview "${MC_EXT_FILENAME}"
+        ;;
+    sqlite)
+        sqlite3 "${MC_EXT_FILENAME}"
         ;;
     glade)
         if glade-3 --version >/dev/null 2>&1; then
