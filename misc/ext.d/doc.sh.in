@@ -14,10 +14,10 @@ staroffice_console() {
         is_view='-dump'
     fi
 
-    tmp=`/bin/mktemp -d ${TMPDIR:-/tmp}/%p.XXXXXX`
+    tmp=`mktemp -d ${TMPDIR:-/tmp}/%p.XXXXXX`
     cd $tmp
-    /usr/bin/soffice2html.pl "${filename}"
-    /usr/bin/elinks ${is_view} content.html
+    soffice2html.pl "${filename}"
+    elinks ${is_view} content.html
     rm -rf "$tmp"
 }
 
@@ -38,12 +38,12 @@ do_view_action() {
         odt2txt "${MC_EXT_FILENAME}"
         ;;
     msdoc)
-        which /usr/bin/wvHtml >/dev/null 2>&1 &&
+        which wvHtml >/dev/null 2>&1 &&
         {
-            tmp=`/bin/mktemp -d ${TMPDIR:-/tmp}/%p.XXXXXX`
-            /usr/bin/wvHtml "${MC_EXT_FILENAME}" --targetdir="$tmp" page.html
-            /usr/bin/elinks -dump "$tmp/page.html"
-            /bin/rm -rf "$tmp"
+            tmp=`mktemp -d ${TMPDIR:-/tmp}/%p.XXXXXX`
+            wvHtml "${MC_EXT_FILENAME}" --targetdir="$tmp" page.html
+            elinks -dump "$tmp/page.html"
+            rm -rf "$tmp"
         } || \
             antiword -t "${MC_EXT_FILENAME}" || \
             catdoc -w "${MC_EXT_FILENAME}" || \
@@ -51,11 +51,11 @@ do_view_action() {
             strings "${MC_EXT_FILENAME}"
         ;;
     msxls)
-        which /usr/bin/xlHtml >/dev/null 2>&1 && {
-            tmp=`/bin/mktemp -d ${TMPDIR:-/tmp}/%p.XXXXXX`
-            /usr/bin/xlhtml -a "${MC_EXT_FILENAME}" > "$tmp/page.html"
-            /usr/bin/elinks -dump "$tmp/page.html"
-            /bin/rm -rf "$tmp"
+        which xlHtml >/dev/null 2>&1 && {
+            tmp=`mktemp -d ${TMPDIR:-/tmp}/%p.XXXXXX`
+            xlhtml -a "${MC_EXT_FILENAME}" > "$tmp/page.html"
+            elinks -dump "$tmp/page.html"
+            rm -rf "$tmp"
         } || \
             xls2csv "${MC_EXT_FILENAME}" || \
             strings "${MC_EXT_FILENAME}"
@@ -112,28 +112,31 @@ do_open_action() {
         if [ -n "$DISPLAY" ]; then
             (abiword "${MC_EXT_FILENAME}" >/dev/null 2>&1 &)
         else
-            tmp=`/bin/mktemp -d ${TMPDIR:-/tmp}/%p.XXXXXX`
-            /usr/bin/wvHtml "${MC_EXT_FILENAME}" --targetdir="$tmp" page.html -1
-            /usr/bin/elinks "$tmp/page.html"
-            /bin/rm -rf "$tmp"
+            tmp=`mktemp -d ${TMPDIR:-/tmp}/%p.XXXXXX`
+            wvHtml "${MC_EXT_FILENAME}" --targetdir="$tmp" page.html -1
+            elinks "$tmp/page.html"
+            rm -rf "$tmp"
         fi
         ;;
     msxls)
         if [ -n "$DISPLAY" ]; then
             (gnumeric "${MC_EXT_FILENAME}" >/dev/null 2>&1 &)
         else
-            tmp=`/bin/mktemp -d ${TMPDIR:-/tmp}/%p.XXXXXX`
-            /usr/bin/xlhtml -a "${MC_EXT_FILENAME}" > "$tmp/page.html"
-            /usr/bin/elinks "$tmp/page.html"
-            /bin/rm -rf "$tmp"
+            tmp=`mktemp -d ${TMPDIR:-/tmp}/%p.XXXXXX`
+            xlhtml -a "${MC_EXT_FILENAME}" > "$tmp/page.html"
+            elinks "$tmp/page.html"
+            rm -rf "$tmp"
         fi
         ;;
     msppt)
         if [ -n "$DISPLAY" ]; then
             (ooffice %f >/dev/null 2>&1 &)
         else
-            tmp=`/bin/mktemp -d ${TMPDIR:-/tmp}/%p.XXXXXX`
-            /usr/bin/ppthtml %f > "$tmp/page.html"; /usr/bin/elinks "$tmp/page.html"; /bin/rm -rf "$tmp"; fi
+            tmp=`mktemp -d ${TMPDIR:-/tmp}/%p.XXXXXX`
+            ppthtml %f > "$tmp/page.html"
+            elinks "$tmp/page.html"
+            rm -rf "$tmp"
+        fi
         ;;
     framemaker)
         fmclient -f "${MC_EXT_FILENAME}"
