@@ -31,10 +31,10 @@ do_open_action() {
 
     case "${filetype}" in
     common)
-        if [ -z "$DISPLAY" ]; then
-            play "${MC_EXT_FILENAME}"
-        else
+        if [ -n "$DISPLAY" ]; then
             (xmms  "${MC_EXT_FILENAME}" >/dev/null 2>&1 &)
+        else
+            play "${MC_EXT_FILENAME}"
         fi
         ;;
     mod)
@@ -45,17 +45,17 @@ do_open_action() {
         vplay -s 22 "${MC_EXT_FILENAME}"
         ;;
     mp3)
-        if [ -z "$DISPLAY" ]; then
-            mpg123 "${MC_EXT_FILENAME}"
-        else
+        if [ -n "$DISPLAY" ]; then
             (xmms "${MC_EXT_FILENAME}" >/dev/null 2>&1 &)
+        else
+            mpg123 "${MC_EXT_FILENAME}"
         fi
         ;;
     ogg)
-        if [ -z "$DISPLAY" ]; then
-            ogg123 "${MC_EXT_FILENAME}"
-        else
+        if [ -n "$DISPLAY" ]; then
             (xmms "${MC_EXT_FILENAME}" >/dev/null 2>&1 &)
+        else
+            ogg123 "${MC_EXT_FILENAME}"
         fi
         ;;
     midi)
@@ -65,10 +65,10 @@ do_open_action() {
         mplayer -vo null "${MC_EXT_FILENAME}"
         ;;
     playlist)
-        if [ -z "$DISPLAY" ]; then
-            mplayer -vo null -playlist "${MC_EXT_FILENAME}"
-        else
+        if [ -n "$DISPLAY" ]; then
             (xmms -p "${MC_EXT_FILENAME}" >/dev/null 2>&1 &)
+        else
+            mplayer -vo null -playlist "${MC_EXT_FILENAME}"
         fi
         ;;
     *)
