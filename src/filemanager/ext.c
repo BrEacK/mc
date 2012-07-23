@@ -858,7 +858,6 @@ regex_command (const vfs_path_t * filename_vpath, const char *action)
             {
                 gboolean case_insense;
                 mc_search_t *search;
-                gboolean ok = FALSE;
 
                 p += 6;
                 case_insense = (strncmp (p, "i/", 2) == 0);
@@ -870,12 +869,9 @@ regex_command (const vfs_path_t * filename_vpath, const char *action)
                 {
                     search->search_type = MC_SEARCH_T_REGEX;
                     search->is_case_sensitive = !case_insense;
-                    ok = mc_search_run (search, filename, 0, file_len, NULL);
+                    found = mc_search_run (search, filename, 0, file_len, NULL);
                     mc_search_free (search);
                 }
-
-                if (ok)
-                    found = TRUE;
             }
             else if (strncmp (p, "directory/", 10) == 0)
             {
